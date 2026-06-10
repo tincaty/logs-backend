@@ -86,7 +86,7 @@ export async function fetchAllComments(
       });
     }
     // checking the user is admin
-    if (user.role !== "Admin" ) {
+    if (user.role === "Admin" ) {
       return res.status(401).json({
         success: false,
         message: "Your not authorized user to view other comments details",
@@ -94,6 +94,54 @@ export async function fetchAllComments(
     } else {
       // now fetching all comments 
       const commentData: any = await Comment.find()
+        .sort({ createdAt: -1 })
+        .select({ __v: 0});
+
+      return res.status(200).json({
+        success: true,
+        message: "All comments are fetched successfully",
+        data: {
+          data: commentData,
+        },
+      });
+    }
+  } catch (err: any) {
+    log(`There is error occurs during fetching of all comments  ${err.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error occurs ",
+    });
+  }
+}
+
+
+
+//fetch all  when comments   for operato
+export async function fetchByIdComment(
+  req: express.Request,
+  res: express.Response,
+): Promise<any> {
+  try {
+    const {id} = req.params
+    // validate user
+    const userId: string = await validateUser(req);
+    // find the user first
+    const user: any = await UserModel.findOne({ _id: userId });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    // checking the user is admin
+    if (user.role !== "Operator" ) {
+      return res.status(401).json({
+        success: false,
+        message: "Your not authorized user to view other comments details",
+      });
+    } else {
+      // now fetching all comments 
+      const commentData: any = await Comment.findById(id)
         .sort({ createdAt: -1 })
         .select({ __v: 0});
 

@@ -135,7 +135,7 @@ export async function fetchAllUsers(
       });
     }
     // checking the user is admin
-    if (user.role !== "Admin" ) {
+    if (user.role !== "Admin") {
       return res.status(401).json({
         success: false,
         message: "Your not authorized user to view other users details",
@@ -144,7 +144,7 @@ export async function fetchAllUsers(
       // now fetching all payment
       const usersData: any = await UserModel.find()
         .sort({ createdAt: -1 })
-        .select({ __v: 0, password:0});
+        .select({ __v: 0, password: 0 });
 
       return res.status(200).json({
         success: true,
@@ -163,3 +163,41 @@ export async function fetchAllUsers(
   }
 }
 
+// method  for user to reset password
+export async function resetPassword(
+  req: express.Request,
+  res: express.Response,
+): Promise<any> {
+  try {
+    // get incomming data from the request body
+    const { newPassword, email } = req.body;
+    log(`Incoming data are ${newPassword} and ${email} for password change`)
+    if (!newPassword || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "New password  and email are  required",
+      });
+    }
+
+    // find the user and  and update
+    await UserModel.findOneAndUpdate(
+      { email: email },
+      {
+        $set: { password: await bcrypt.hash(newPassword, 10) },
+      },
+      { returnDocument: "after" },
+    );
+    return res.status(200).json({
+      success: true,
+      message: "Password has been reset success please login again",
+    });
+  } catch (err: any) {
+    log(`There is error occurs ${err.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error occurs Please try again later ",
+    });
+  }
+}
+
+//
